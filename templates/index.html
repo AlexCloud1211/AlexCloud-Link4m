@@ -1,1 +1,416 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>🛒 ZENMODS Shop</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+        }
+        
+        body {
+            background: var(--tg-theme-bg-color, #1a1a2e);
+            color: var(--tg-theme-text-color, #ffffff);
+            min-height: 100vh;
+            padding: 16px;
+            padding-bottom: 100px;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 20px 0 16px;
+            border-bottom: 2px solid var(--tg-theme-button-color, #e94560);
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 26px;
+            color: var(--tg-theme-button-color, #e94560);
+            font-weight: 800;
+        }
+        
+        .header p {
+            color: var(--tg-theme-hint-color, #888);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+        
+        /* Product Grid */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        @media (min-width: 480px) {
+            .product-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        .product-card {
+            background: var(--tg-theme-secondary-bg-color, #16213e);
+            border-radius: 14px;
+            padding: 14px;
+            text-align: center;
+            border: 1px solid var(--tg-theme-hint-color, #2a3a5e);
+            transition: transform 0.15s;
+        }
+        
+        .product-card:active {
+            transform: scale(0.96);
+        }
+        
+        .product-card .icon {
+            font-size: 36px;
+            margin: 6px 0;
+        }
+        
+        .product-card .name {
+            font-weight: 700;
+            font-size: 14px;
+            margin: 4px 0;
+        }
+        
+        .product-card .desc {
+            font-size: 11px;
+            color: var(--tg-theme-hint-color, #888);
+            margin: 4px 0;
+            min-height: 32px;
+        }
+        
+        .product-card .price {
+            color: var(--tg-theme-button-color, #e94560);
+            font-weight: 700;
+            font-size: 16px;
+            margin: 8px 0;
+        }
+        
+        .product-card .btn-add {
+            background: var(--tg-theme-button-color, #e94560);
+            border: none;
+            color: var(--tg-theme-button-text-color, #ffffff);
+            padding: 8px 0;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
+            width: 100%;
+            transition: opacity 0.15s;
+        }
+        
+        .product-card .btn-add:active {
+            opacity: 0.7;
+        }
+        
+        /* Cart */
+        .cart {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--tg-theme-secondary-bg-color, #16213e);
+            padding: 12px 16px;
+            border-top: 2px solid var(--tg-theme-button-color, #e94560);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            z-index: 100;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .cart-info {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            font-size: 14px;
+        }
+        
+        .cart-info .count {
+            background: var(--tg-theme-button-color, #e94560);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            padding: 1px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+        
+        .btn-checkout {
+            background: var(--tg-theme-button-color, #e94560);
+            border: none;
+            color: var(--tg-theme-button-text-color, #ffffff);
+            padding: 10px 24px;
+            border-radius: 25px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.15s;
+            font-size: 14px;
+        }
+        
+        .btn-checkout:active {
+            opacity: 0.7;
+        }
+        
+        .btn-checkout:disabled {
+            background: var(--tg-theme-hint-color, #555);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--tg-theme-button-color, #e94560);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            padding: 10px 24px;
+            border-radius: 12px;
+            display: none;
+            z-index: 999;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            animation: slideDown 0.3s ease;
+            text-align: center;
+            max-width: 90%;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 0;
+            color: var(--tg-theme-hint-color, #888);
+        }
+        
+        .empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
 
+    <!-- Toast -->
+    <div class="toast" id="toast">✅ Đã thêm vào giỏ hàng!</div>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>🛒 ZENMODS SHOP</h1>
+        <p>Chuyên cung cấp tool & hack FreeFire</p>
+    </div>
+
+    <!-- Products -->
+    <div class="product-grid" id="productGrid">
+        <div class="empty-state">
+            <div class="icon">⏳</div>
+            <p>Đang tải sản phẩm...</p>
+        </div>
+    </div>
+
+    <!-- Cart -->
+    <div class="cart" id="cart">
+        <div class="cart-info">
+            <span>🛒</span>
+            <span class="count" id="cartCount">0</span>
+            <span id="cartTotal">0 VND</span>
+        </div>
+        <button class="btn-checkout" id="btnCheckout" disabled>📦 Thanh toán</button>
+    </div>
+
+    <script>
+        // ============================================
+        // STATE
+        // ============================================
+        
+        let products = [];
+        let cart = [];
+
+        // ============================================
+        // DOM REFS
+        // ============================================
+        
+        const productGrid = document.getElementById('productGrid');
+        const cartCount = document.getElementById('cartCount');
+        const cartTotal = document.getElementById('cartTotal');
+        const btnCheckout = document.getElementById('btnCheckout');
+        const toast = document.getElementById('toast');
+
+        // ============================================
+        // TELEGRAM WEB APP
+        // ============================================
+        
+        const tg = window.Telegram?.WebApp;
+        const userId = tg?.initDataUnsafe?.user?.id || 7463456773;
+        
+        if (tg) {
+            tg.ready();
+            tg.expand();
+            tg.setHeaderColor('#1a1a2e');
+            tg.setBackgroundColor('#1a1a2e');
+        }
+
+        // ============================================
+        // LOAD PRODUCTS
+        // ============================================
+        
+        async function loadProducts() {
+            try {
+                const res = await fetch('/api/products');
+                products = await res.json();
+                renderProducts();
+            } catch (e) {
+                productGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">❌</div>
+                        <p>Lỗi tải sản phẩm!</p>
+                        <p style="font-size:12px;margin-top:8px;">${e.message}</p>
+                    </div>
+                `;
+                console.error(e);
+            }
+        }
+
+        function renderProducts() {
+            if (!products || products.length === 0) {
+                productGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <p>Chưa có sản phẩm!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            productGrid.innerHTML = products.map(p => `
+                <div class="product-card">
+                    <div class="icon">🔫</div>
+                    <div class="name">${p.name}</div>
+                    <div class="desc">${p.desc || ''}</div>
+                    <div class="price">${p.price.toLocaleString()} VND</div>
+                    <button class="btn-add" data-id="${p.id}">➕ Thêm</button>
+                </div>
+            `).join('');
+            
+            // Gán sự kiện click cho các nút
+            document.querySelectorAll('.btn-add').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = parseInt(btn.dataset.id);
+                    addToCart(id);
+                });
+            });
+        }
+
+        // ============================================
+        // CART FUNCTIONS
+        // ============================================
+        
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            const existing = cart.find(item => item.id === productId);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+            
+            updateCart();
+            showToast('✅ Đã thêm ' + product.name);
+        }
+
+        function updateCart() {
+            const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+            const totalPrice = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+            
+            cartCount.textContent = totalItems;
+            cartTotal.textContent = totalPrice.toLocaleString() + ' VND';
+            btnCheckout.disabled = totalItems === 0;
+        }
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => {
+                toast.style.display = 'none';
+            }, 2000);
+        }
+
+        // ============================================
+        // CHECKOUT
+        // ============================================
+        
+        btnCheckout.addEventListener('click', async () => {
+            if (cart.length === 0) return;
+
+            const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+            const orderData = {
+                user_id: userId,
+                items: cart.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    qty: item.qty
+                })),
+                total: total
+            };
+
+            try {
+                const res = await fetch('/api/order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                });
+                const result = await res.json();
+
+                if (result.status === 'success') {
+                    showToast('✅ Đặt hàng thành công!');
+                    cart = [];
+                    updateCart();
+                    
+                    // Thông báo cho Telegram
+                    if (tg) {
+                        tg.sendData(JSON.stringify({
+                            type: 'order_success',
+                            order_id: result.order_id,
+                            total: total
+                        }));
+                    }
+                    
+                    // Rung điện thoại
+                    if (tg && tg.HapticFeedback) {
+                        tg.HapticFeedback.impactOccurred('medium');
+                    }
+                } else {
+                    showToast('❌ Lỗi đặt hàng!');
+                }
+            } catch (e) {
+                showToast('❌ Lỗi kết nối!');
+                console.error(e);
+            }
+        });
+
+        // ============================================
+        // START
+        // ============================================
+        
+        loadProducts();
+    </script>
+
+</body>
+</html>
