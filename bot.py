@@ -1,6 +1,4 @@
 from flask import Flask, request, jsonify, render_template
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 import os
 import json
 import time
@@ -11,8 +9,7 @@ import threading
 # ============================================
 
 BOT_TOKEN = '8856256732:AAHbU087YImuUwheV4qhkh_uvZH0DOq6dnw'
-YOUR_USER_ID = 7463456773
-WEBAPP_URL = os.environ.get('RENDER_EXTERNAL_URL', 'https://your-app.onrender.com')
+WEBAPP_URL = os.environ.get('RENDER_EXTERNAL_URL', 'https://alexcloud-link4m.onrender.com')
 
 # ============================================
 # FLASK APP
@@ -39,7 +36,10 @@ PRODUCTS = [
 @flask_app.route('/')
 def index():
     """Trang chủ Web App"""
-    return render_template('index.html')
+    try:
+        return render_template('index.html')
+    except Exception as e:
+        return f"Lỗi: {e}", 500
 
 @flask_app.route('/api/products')
 def get_products():
@@ -49,27 +49,25 @@ def get_products():
 @flask_app.route('/api/order', methods=['POST'])
 def create_order():
     """API tạo đơn hàng"""
-    data = request.json
-    user_id = data.get('user_id')
-    items = data.get('items', [])
-    total = data.get('total', 0)
-    
-    # In ra console
-    print(f"\n📦 ĐƠN HÀNG MỚI!")
-    print(f"👤 User: {user_id}")
-    print(f"📦 Sản phẩm: {json.dumps(items, indent=2)}")
-    print(f"💰 Tổng: {total} VND")
-    print("="*50)
-    
-    # Lưu vào file log
-    with open('orders.txt', 'a', encoding='utf-8') as f:
-        f.write(f"[{time.ctime()}] User {user_id}: {json.dumps(items)} | Total: {total}\n")
-    
-    return jsonify({
-        "status": "success",
-        "message": "Đơn hàng đã được ghi nhận!",
-        "order_id": int(time.time())
-    })
+    try:
+        data = request.json
+        user_id = data.get('user_id', 'Unknown')
+        items = data.get('items', [])
+        total = data.get('total', 0)
+        
+        print(f"\n📦 ĐƠN HÀNG MỚI!")
+        print(f"👤 User: {user_id}")
+        print(f"📦 Sản phẩm: {json.dumps(items, indent=2)}")
+        print(f"💰 Tổng: {total} VND")
+        print("="*50)
+        
+        return jsonify({
+            "status": "success",
+            "message": "Đơn hàng đã được ghi nhận!",
+            "order_id": int(time.time())
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @flask_app.route('/ping')
 def ping():
@@ -77,100 +75,61 @@ def ping():
     return "Pong! Bot is alive!", 200
 
 # ============================================
-# TELEGRAM BOT HANDLERS
-# ============================================
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Lệnh /start"""
-    keyboard = [
-        [InlineKeyboardButton("🛒 Vào Shop", web_app=WebAppInfo(url=WEBAPP_URL))],
-        [InlineKeyboardButton("📦 Đơn hàng", callback_data='orders')],
-        [InlineKeyboardButton("📞 Liên hệ", callback_data='contact')],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    await update.message.reply_text(
-        "🛍️ <b>CHÀO MỪNG ĐẾN ZENMODS SHOP!</b>\n\n"
-        "Chuyên cung cấp:\n"
-        "🔹 Hack FreeFire Root/Non-Root\n"
-        "🔹 Mod iOS\n"
-        "🔹 Tool Auto Headshot\n"
-        "🔹 Skin Hack\n\n"
-        "👇 <b>Bấm nút Vào Shop để mua hàng!</b>",
-        reply_markup=reply_markup,
-        parse_mode='html'
-    )
-
-async def shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Lệnh /shop"""
-    await update.message.reply_text(
-        "🛒 <b>MỞ SHOP...</b>\n"
-        "Bấm nút bên dưới để vào cửa hàng:",
-        reply_markup=InlineKeyboardMarkup([[
-            InlineKeyboardButton("🛒 Vào Shop", web_app=WebAppInfo(url=WEBAPP_URL))
-        ]]),
-        parse_mode='html'
-    )
-
-async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Xử lý nút bấm"""
-    query = update.callback_query
-    await query.answer()
-    
-    if query.data == 'orders':
-        await query.edit_message_text(
-            "📦 <b>ĐƠN HÀNG CỦA BẠN</b>\n\n"
-            "Hiện chưa có đơn hàng nào.\n"
-            "Hãy vào Shop để mua sắm! 🛒",
-            parse_mode='html'
-        )
-    elif query.data == 'contact':
-        await query.edit_message_text(
-            "📞 <b>LIÊN HỆ</b>\n\n"
-            "Admin: @ZenVnStore\n"
-            "Group: https://t.me/ZenStoreVn\n\n"
-            "💬 Hỗ trợ 24/7!",
-            parse_mode='html'
-        )
-
-# ============================================
-# KHỞI CHẠY FLASK
-# ============================================
-
-def run_flask():
-    port = int(os.environ.get('PORT', 5000))
-    flask_app.run(host='0.0.0.0', port=port, debug=False)
-
-# ============================================
-# KHỞI CHẠY BOT
+# TELEGRAM BOT (CHẠY TRONG THREAD RIÊNG)
 # ============================================
 
 def run_bot():
-    app = Application.builder().token(BOT_TOKEN).build()
-    
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("shop", shop))
-    app.add_handler(CallbackQueryHandler(handle_callback))
-    
-    print("🤖 Bot đang chạy...")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    """Chạy Telegram Bot trong thread riêng"""
+    try:
+        from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+        from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+        
+        app = Application.builder().token(BOT_TOKEN).build()
+        
+        async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            keyboard = [
+                [InlineKeyboardButton("🛒 Vào Shop", web_app=WebAppInfo(url=WEBAPP_URL))],
+                [InlineKeyboardButton("📦 Đơn hàng", callback_data='orders')],
+                [InlineKeyboardButton("📞 Liên hệ", callback_data='contact')],
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await update.message.reply_text(
+                "🛍️ <b>CHÀO MỪNG ĐẾN ZENMODS SHOP!</b>\n\n"
+                "👇 <b>Bấm nút Vào Shop để mua hàng!</b>",
+                reply_markup=reply_markup,
+                parse_mode='html'
+            )
+        
+        async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            await query.answer()
+            if query.data == 'orders':
+                await query.edit_message_text("📦 Chưa có đơn hàng nào!", parse_mode='html')
+            elif query.data == 'contact':
+                await query.edit_message_text(
+                    "📞 Admin: @ZenVnStore\nGroup: https://t.me/ZenStoreVn",
+                    parse_mode='html'
+                )
+        
+        app.add_handler(CommandHandler("start", start))
+        app.add_handler(CallbackQueryHandler(handle_callback))
+        
+        print("🤖 Bot đang chạy...")
+        app.run_polling(allowed_updates=Update.ALL_TYPES)
+        
+    except Exception as e:
+        print(f"❌ Lỗi bot: {e}")
 
 # ============================================
-# MAIN
+# KHỞI CHẠY
 # ============================================
 
 if __name__ == '__main__':
-    # Chạy Flask trong thread riêng
-    flask_thread = threading.Thread(target=run_flask)
-    flask_thread.daemon = True
-    flask_thread.start()
+    # Chạy bot trong thread riêng
+    bot_thread = threading.Thread(target=run_bot, daemon=True)
+    bot_thread.start()
     
-    print(f"🌐 Web App URL: {WEBAPP_URL}")
-    print("⏳ Đang khởi động...")
-    
-    # Đợi Flask khởi động
-    import time as t
-    t.sleep(3)
-    
-    # Chạy Bot
-    run_bot()
+    # Chạy Flask
+    port = int(os.environ.get('PORT', 5000))
+    print(f"🚀 Đang chạy Flask trên port {port}...")
+    flask_app.run(host='0.0.0.0', port=port, debug=False)
