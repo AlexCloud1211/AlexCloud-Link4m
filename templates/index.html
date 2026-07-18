@@ -2,233 +2,461 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>🛒 ZENMODS Shop</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+        }
+        
+        :root {
+            --bg-primary: #0f0e17;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-card-hover: #1e2d5a;
+            --text-primary: #fffffe;
+            --text-secondary: #a7a9be;
+            --accent: #ff8906;
+            --accent-glow: rgba(255, 137, 6, 0.3);
+            --gradient: linear-gradient(135deg, #ff8906, #f25f4c);
+            --shadow: 0 8px 32px rgba(0,0,0,0.4);
+            --radius: 16px;
+            --radius-sm: 12px;
         }
         
         body {
-            background: var(--tg-theme-bg-color, #1a1a2e);
-            color: var(--tg-theme-text-color, #ffffff);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             min-height: 100vh;
-            padding: 16px;
-            padding-bottom: 100px;
+            padding: 16px 16px 120px;
+            background-image: 
+                radial-gradient(ellipse at 20% 50%, rgba(255,137,6,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(242,95,76,0.06) 0%, transparent 50%);
         }
         
-        /* Header */
+        /* ===== HEADER ===== */
         .header {
             text-align: center;
-            padding: 20px 0 16px;
-            border-bottom: 2px solid var(--tg-theme-button-color, #e94560);
-            margin-bottom: 20px;
+            padding: 28px 0 20px;
+            position: relative;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 2px;
+            background: var(--gradient);
+            border-radius: 2px;
+            opacity: 0.6;
+        }
+        
+        .header .logo {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 8px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
         }
         
         .header h1 {
-            font-size: 26px;
-            color: var(--tg-theme-button-color, #e94560);
-            font-weight: 800;
+            font-size: 28px;
+            font-weight: 900;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
         }
         
         .header p {
-            color: var(--tg-theme-hint-color, #888);
+            color: var(--text-secondary);
             font-size: 13px;
-            margin-top: 4px;
+            font-weight: 400;
+            margin-top: 6px;
+            letter-spacing: 0.3px;
         }
         
-        /* Product Grid */
+        /* ===== BADGE ===== */
+        .badge-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 16px 0 20px;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            background: var(--bg-secondary);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border: 1px solid rgba(255,137,6,0.15);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #00e676;
+            animation: pulse-dot 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+        
+        /* ===== PRODUCT GRID ===== */
         .product-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
+            gap: 14px;
+            margin-top: 4px;
         }
         
-        @media (min-width: 480px) {
+        @media (min-width: 500px) {
             .product-grid {
                 grid-template-columns: repeat(3, 1fr);
             }
         }
         
+        @media (min-width: 768px) {
+            .product-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
         .product-card {
-            background: var(--tg-theme-secondary-bg-color, #16213e);
-            border-radius: 14px;
-            padding: 14px;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 18px 14px 16px;
             text-align: center;
-            border: 1px solid var(--tg-theme-hint-color, #2a3a5e);
-            transition: transform 0.15s;
+            border: 1px solid rgba(255,255,255,0.04);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: default;
         }
         
-        .product-card:active {
-            transform: scale(0.96);
+        .product-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--gradient);
+            opacity: 0;
+            transition: opacity 0.4s;
+            border-radius: var(--radius);
         }
         
-        .product-card .icon {
-            font-size: 36px;
-            margin: 6px 0;
+        .product-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255,137,6,0.2);
+            box-shadow: 0 12px 40px rgba(255,137,6,0.08);
+        }
+        
+        .product-card:hover::before {
+            opacity: 0.04;
+        }
+        
+        .product-card .icon-wrap {
+            font-size: 38px;
+            display: block;
+            margin-bottom: 6px;
+            position: relative;
+            z-index: 1;
         }
         
         .product-card .name {
             font-weight: 700;
             font-size: 14px;
-            margin: 4px 0;
+            line-height: 1.3;
+            margin: 4px 0 2px;
+            position: relative;
+            z-index: 1;
         }
         
         .product-card .desc {
             font-size: 11px;
-            color: var(--tg-theme-hint-color, #888);
-            margin: 4px 0;
-            min-height: 32px;
+            color: var(--text-secondary);
+            margin: 4px 0 8px;
+            min-height: 30px;
+            line-height: 1.4;
+            position: relative;
+            z-index: 1;
         }
         
         .product-card .price {
-            color: var(--tg-theme-button-color, #e94560);
-            font-weight: 700;
-            font-size: 16px;
-            margin: 8px 0;
+            font-size: 17px;
+            font-weight: 800;
+            color: var(--accent);
+            margin: 6px 0 10px;
+            position: relative;
+            z-index: 1;
         }
         
-        .product-card .btn-add {
-            background: var(--tg-theme-button-color, #e94560);
+        .product-card .price span {
+            font-size: 11px;
+            font-weight: 400;
+            color: var(--text-secondary);
+        }
+        
+        .btn-add {
+            background: var(--gradient);
             border: none;
-            color: var(--tg-theme-button-text-color, #ffffff);
-            padding: 8px 0;
-            border-radius: 20px;
+            color: #fff;
+            padding: 10px 0;
+            border-radius: 30px;
             cursor: pointer;
             font-weight: 700;
             font-size: 13px;
             width: 100%;
-            transition: opacity 0.15s;
+            transition: all 0.25s ease;
+            position: relative;
+            z-index: 1;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 16px rgba(255,137,6,0.25);
         }
         
-        .product-card .btn-add:active {
-            opacity: 0.7;
+        .btn-add:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 24px rgba(255,137,6,0.35);
         }
         
-        /* Cart */
+        .btn-add:active {
+            transform: scale(0.95);
+        }
+        
+        /* ===== CART ===== */
         .cart {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: var(--tg-theme-secondary-bg-color, #16213e);
-            padding: 12px 16px;
-            border-top: 2px solid var(--tg-theme-button-color, #e94560);
+            background: var(--bg-secondary);
+            padding: 14px 20px;
+            border-top: 1px solid rgba(255,137,6,0.15);
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 10px;
             z-index: 100;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 -8px 40px rgba(0,0,0,0.5);
+            border-radius: 20px 20px 0 0;
         }
         
         .cart-info {
             display: flex;
-            gap: 12px;
+            gap: 14px;
             align-items: center;
             font-size: 14px;
         }
         
+        .cart-info .cart-icon {
+            font-size: 22px;
+        }
+        
         .cart-info .count {
-            background: var(--tg-theme-button-color, #e94560);
-            color: var(--tg-theme-button-text-color, #ffffff);
+            background: var(--gradient);
+            color: #fff;
             padding: 1px 12px;
-            border-radius: 20px;
+            border-radius: 30px;
             font-size: 13px;
             font-weight: 700;
+            min-width: 24px;
+            text-align: center;
+        }
+        
+        .cart-info .total {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--accent);
         }
         
         .btn-checkout {
-            background: var(--tg-theme-button-color, #e94560);
+            background: var(--gradient);
             border: none;
-            color: var(--tg-theme-button-text-color, #ffffff);
-            padding: 10px 24px;
-            border-radius: 25px;
+            color: #fff;
+            padding: 12px 28px;
+            border-radius: 30px;
             font-weight: 700;
             cursor: pointer;
-            transition: opacity 0.15s;
+            transition: all 0.25s ease;
             font-size: 14px;
+            box-shadow: 0 4px 20px rgba(255,137,6,0.3);
+            letter-spacing: 0.3px;
+        }
+        
+        .btn-checkout:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 28px rgba(255,137,6,0.4);
         }
         
         .btn-checkout:active {
-            opacity: 0.7;
+            transform: scale(0.95);
         }
         
         .btn-checkout:disabled {
-            background: var(--tg-theme-hint-color, #555);
+            background: #2a2a4a;
+            box-shadow: none;
             cursor: not-allowed;
             opacity: 0.5;
         }
         
-        /* Toast */
+        .btn-checkout:disabled:hover {
+            transform: none;
+        }
+        
+        /* ===== TOAST ===== */
         .toast {
             position: fixed;
-            top: 20px;
+            top: 24px;
             left: 50%;
-            transform: translateX(-50%);
-            background: var(--tg-theme-button-color, #e94560);
-            color: var(--tg-theme-button-text-color, #ffffff);
-            padding: 10px 24px;
-            border-radius: 12px;
+            transform: translateX(-50%) translateY(-20px);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 14px 28px;
+            border-radius: var(--radius-sm);
             display: none;
             z-index: 999;
             font-weight: 600;
             font-size: 14px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            animation: slideDown 0.3s ease;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,137,6,0.15);
+            animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
             text-align: center;
             max-width: 90%;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
         }
         
         @keyframes slideDown {
-            from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+            from { transform: translateX(-50%) translateY(-30px); opacity: 0; }
             to { transform: translateX(-50%) translateY(0); opacity: 1; }
         }
         
+        .toast .toast-icon {
+            margin-right: 8px;
+        }
+        
+        /* ===== EMPTY STATE ===== */
         .empty-state {
             text-align: center;
-            padding: 60px 0;
-            color: var(--tg-theme-hint-color, #888);
+            padding: 60px 20px;
+            color: var(--text-secondary);
         }
         
         .empty-state .icon {
-            font-size: 48px;
-            margin-bottom: 12px;
+            font-size: 52px;
+            margin-bottom: 16px;
+            display: block;
+        }
+        
+        .empty-state h3 {
+            font-size: 18px;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+        
+        .empty-state p {
+            font-size: 13px;
+        }
+        
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 4px;
+        }
+        
+        /* ===== SHIMMER LOADING ===== */
+        .shimmer {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 18px 14px 16px;
+            text-align: center;
+            animation: shimmer 1.5s ease-in-out infinite;
+        }
+        
+        .shimmer .icon-s { width: 38px; height: 38px; background: #2a2a4a; border-radius: 50%; margin: 0 auto 8px; }
+        .shimmer .name-s { height: 14px; background: #2a2a4a; border-radius: 8px; margin: 4px auto; width: 70%; }
+        .shimmer .desc-s { height: 10px; background: #2a2a4a; border-radius: 8px; margin: 4px auto; width: 50%; }
+        .shimmer .price-s { height: 16px; background: #2a2a4a; border-radius: 8px; margin: 6px auto; width: 40%; }
+        .shimmer .btn-s { height: 38px; background: #2a2a4a; border-radius: 30px; margin-top: 8px; }
+        
+        @keyframes shimmer {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Toast -->
-    <div class="toast" id="toast">✅ Đã thêm vào giỏ hàng!</div>
-
-    <!-- Header -->
-    <div class="header">
-        <h1>🛒 ZENMODS SHOP</h1>
-        <p>Chuyên cung cấp tool & hack FreeFire</p>
+    <!-- ===== TOAST ===== -->
+    <div class="toast" id="toast">
+        <span class="toast-icon">✅</span>
+        <span id="toastMsg">Đã thêm vào giỏ hàng!</span>
     </div>
 
-    <!-- Products -->
-    <div class="product-grid" id="productGrid">
-        <div class="empty-state">
-            <div class="icon">⏳</div>
-            <p>Đang tải sản phẩm...</p>
+    <!-- ===== HEADER ===== -->
+    <header class="header">
+        <span class="logo">⚡</span>
+        <h1>ZENMODS SHOP</h1>
+        <p>🔹 Hack • Mod • Tool 🔹</p>
+        <div class="badge-row">
+            <span class="badge"><span class="dot"></span> Online</span>
+            <span class="badge">🏆 Uy tín #1</span>
+            <span class="badge">⚡ 24/7</span>
         </div>
+    </header>
+
+    <!-- ===== PRODUCTS ===== -->
+    <div class="product-grid" id="productGrid">
+        <!-- Skeleton loading -->
+        <div class="shimmer"><div class="icon-s"></div><div class="name-s"></div><div class="desc-s"></div><div class="price-s"></div><div class="btn-s"></div></div>
+        <div class="shimmer"><div class="icon-s"></div><div class="name-s"></div><div class="desc-s"></div><div class="price-s"></div><div class="btn-s"></div></div>
+        <div class="shimmer"><div class="icon-s"></div><div class="name-s"></div><div class="desc-s"></div><div class="price-s"></div><div class="btn-s"></div></div>
+        <div class="shimmer"><div class="icon-s"></div><div class="name-s"></div><div class="desc-s"></div><div class="price-s"></div><div class="btn-s"></div></div>
     </div>
 
-    <!-- Cart -->
+    <!-- ===== CART ===== -->
     <div class="cart" id="cart">
         <div class="cart-info">
-            <span>🛒</span>
+            <span class="cart-icon">🛒</span>
             <span class="count" id="cartCount">0</span>
-            <span id="cartTotal">0 VND</span>
+            <span class="total" id="cartTotal">0 VND</span>
         </div>
-        <button class="btn-checkout" id="btnCheckout" disabled>📦 Thanh toán</button>
+        <button class="btn-checkout" id="btnCheckout" disabled>
+            📦 Thanh toán
+        </button>
     </div>
 
     <script>
@@ -248,6 +476,7 @@
         const cartTotal = document.getElementById('cartTotal');
         const btnCheckout = document.getElementById('btnCheckout');
         const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
 
         // ============================================
         // TELEGRAM WEB APP
@@ -259,8 +488,8 @@
         if (tg) {
             tg.ready();
             tg.expand();
-            tg.setHeaderColor('#1a1a2e');
-            tg.setBackgroundColor('#1a1a2e');
+            tg.setHeaderColor('#0f0e17');
+            tg.setBackgroundColor('#0f0e17');
         }
 
         // ============================================
@@ -270,14 +499,16 @@
         async function loadProducts() {
             try {
                 const res = await fetch('/api/products');
+                if (!res.ok) throw new Error('Network error');
                 products = await res.json();
                 renderProducts();
             } catch (e) {
                 productGrid.innerHTML = `
-                    <div class="empty-state">
-                        <div class="icon">❌</div>
-                        <p>Lỗi tải sản phẩm!</p>
-                        <p style="font-size:12px;margin-top:8px;">${e.message}</p>
+                    <div class="empty-state" style="grid-column:1/-1">
+                        <span class="icon">🔌</span>
+                        <h3>Không thể kết nối</h3>
+                        <p>Vui lòng thử lại sau</p>
+                        <button onclick="loadProducts()" style="margin-top:16px;background:var(--gradient);border:none;color:#fff;padding:10px 30px;border-radius:30px;font-weight:700;cursor:pointer;">🔄 Thử lại</button>
                     </div>
                 `;
                 console.error(e);
@@ -287,29 +518,34 @@
         function renderProducts() {
             if (!products || products.length === 0) {
                 productGrid.innerHTML = `
-                    <div class="empty-state">
-                        <div class="icon">📭</div>
-                        <p>Chưa có sản phẩm!</p>
+                    <div class="empty-state" style="grid-column:1/-1">
+                        <span class="icon">📭</span>
+                        <h3>Chưa có sản phẩm</h3>
+                        <p>Quay lại sau nhé!</p>
                     </div>
                 `;
                 return;
             }
             
-            productGrid.innerHTML = products.map(p => `
+            const icons = ['🔫', '💀', '📱', '🎯', '👑', '🛡️', '⚔️', '🔥'];
+            
+            productGrid.innerHTML = products.map((p, i) => `
                 <div class="product-card">
-                    <div class="icon">🔫</div>
+                    <span class="icon-wrap">${icons[i % icons.length]}</span>
                     <div class="name">${p.name}</div>
                     <div class="desc">${p.desc || ''}</div>
-                    <div class="price">${p.price.toLocaleString()} VND</div>
+                    <div class="price">${p.price.toLocaleString()} <span>₫</span></div>
                     <button class="btn-add" data-id="${p.id}">➕ Thêm</button>
                 </div>
             `).join('');
             
-            // Gán sự kiện click cho các nút
             document.querySelectorAll('.btn-add').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const id = parseInt(btn.dataset.id);
                     addToCart(id);
+                    if (tg && tg.HapticFeedback) {
+                        tg.HapticFeedback.impactOccurred('light');
+                    }
                 });
             });
         }
@@ -330,7 +566,7 @@
             }
             
             updateCart();
-            showToast('✅ Đã thêm ' + product.name);
+            showToast(`✅ Đã thêm ${product.name}`);
         }
 
         function updateCart() {
@@ -338,17 +574,22 @@
             const totalPrice = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
             
             cartCount.textContent = totalItems;
-            cartTotal.textContent = totalPrice.toLocaleString() + ' VND';
+            cartTotal.textContent = totalPrice.toLocaleString() + ' ₫';
             btnCheckout.disabled = totalItems === 0;
         }
 
+        let toastTimer = null;
+
         function showToast(msg) {
-            toast.textContent = msg;
+            toastMsg.textContent = msg;
             toast.style.display = 'block';
-            clearTimeout(toast._timer);
-            toast._timer = setTimeout(() => {
+            toast.style.animation = 'none';
+            setTimeout(() => toast.style.animation = 'slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards', 10);
+            
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
                 toast.style.display = 'none';
-            }, 2000);
+            }, 2500);
         }
 
         // ============================================
@@ -370,6 +611,9 @@
                 total: total
             };
 
+            btnCheckout.disabled = true;
+            btnCheckout.textContent = '⏳ Đang xử lý...';
+
             try {
                 const res = await fetch('/api/order', {
                     method: 'POST',
@@ -379,11 +623,14 @@
                 const result = await res.json();
 
                 if (result.status === 'success') {
-                    showToast('✅ Đặt hàng thành công!');
+                    showToast('✅ Đặt hàng thành công! 🎉');
                     cart = [];
                     updateCart();
                     
-                    // Thông báo cho Telegram
+                    if (tg && tg.HapticFeedback) {
+                        tg.HapticFeedback.notificationOccurred('success');
+                    }
+                    
                     if (tg) {
                         tg.sendData(JSON.stringify({
                             type: 'order_success',
@@ -391,17 +638,15 @@
                             total: total
                         }));
                     }
-                    
-                    // Rung điện thoại
-                    if (tg && tg.HapticFeedback) {
-                        tg.HapticFeedback.impactOccurred('medium');
-                    }
                 } else {
-                    showToast('❌ Lỗi đặt hàng!');
+                    showToast('❌ Lỗi đặt hàng, thử lại!');
                 }
             } catch (e) {
                 showToast('❌ Lỗi kết nối!');
                 console.error(e);
+            } finally {
+                btnCheckout.disabled = cart.length === 0;
+                btnCheckout.textContent = '📦 Thanh toán';
             }
         });
 
